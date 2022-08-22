@@ -1,0 +1,64 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+
+{% block body %}
+
+
+<!-- creating a new post form -->
+<div id="new_post_container">
+    <form id="new_post_form">
+         <div class="container mt-5">
+             <div class="row">
+                    &nbsp;&nbsp;&nbsp;&nbsp;<h2>New Post</h2>
+                          <div class="col-md-12 d-flex justify-content-center">
+                              <textarea id="post_content"  class="form-control textarea" placeholder="Type Here..."></textarea>
+                         </div>
+             </div> 
+
+            {% if user.is_authenticated %}
+                    <button class="btn btn-primary" >Post</button>
+            {% else %}
+                    <a class="btn btn-primary"  id="new_post" href="/login">Log in to Post </a>
+            {% endif %}
+
+
+        </div>
+    </form>
+        <hr>
+</div>
+
+
+
+<!-- showing all the posts  -->
+<div id="all-posts-view">
+
+</div>
+
+<!-- showing the following posts -->
+<div id="following_view">
+
+</div>
+
+
+
+
+{% endblock %}
+
+
+{% block script %}
+
+<script src="{% static 'network/network.js' %}"></script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
