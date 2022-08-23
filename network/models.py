@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.views.generic import ListView
 
 
 
@@ -61,3 +62,8 @@ class Post(models.Model):
             "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
             "likes": self.likes
         }
+
+        
+class ContactListView(ListView):
+    paginate_by = 10
+    model = Post

@@ -1,6 +1,8 @@
 {% extends "network/layout.html" %}
 {% load static %}
-
+{%block main%}
+<input type="hidden" style="display:none" id="is_logged" value="{{is_logged}}">
+{%endblock%}
 
 {% block body %}
 
@@ -29,9 +31,9 @@
 </div>
 
 
-
 <!-- showing all the posts  -->
 <div id="all-posts-view">
+    
 
 </div>
 
@@ -39,7 +41,10 @@
 <div id="following_view">
 
 </div>
+<!-- next and previous buttons -->
+<div id="page_buttons">
 
+</div>
 
 
 

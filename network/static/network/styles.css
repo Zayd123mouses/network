@@ -156,6 +156,19 @@ p {
     text-transform: capitalize;
 }
 
-.liked{
-    color: blue;
+.post{
+    padding: 10px;
+
 }
+#all-posts-view{
+   
+    position: relative;
+ }
+ #next{
+    
+    position: absolute;
+    bottom: 0px;
+    padding: 10px;
+    margin-left: 50%;
+    text-align: center;
+ }

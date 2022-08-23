@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
  
+from django.core.paginator import Paginator
 
 
 from .models import User, Post, Like, Comment, UserFollowing
@@ -15,7 +16,12 @@ from .models import User, Post, Like, Comment, UserFollowing
 
 
 def home(request):
-    return render(request, "network/index.html")
+    if request.user.is_authenticated:
+        logged = True
+    else:
+        logged = False 
+
+    return render(request, "network/index.html",{"is_logged":logged})
 
 
 def index(request):
@@ -78,10 +84,20 @@ def register(request):
 # load all posts in the first route
 def all_posts(request):
     
+    # get all the posts 
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
+    #  each page contain only 10 posts
+    paginator = Paginator(posts, 10)
+    page_obj = paginator.object_list
 
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    # page_number = request.GET.get('page')
+    # page_obj = paginator.get_page(request.headers.get("pageNumber"))
+
+    return JsonResponse({"has_next":"page_obj.has_next()",
+                        "posts":[post.serialize() for post  in page_obj],
+                        "has_previous":"page_obj.has_previous()"}
+                        ,safe=False)
 
 
 @csrf_exempt
@@ -198,31 +214,61 @@ def followingPosts(request):
 
 def user_id(request):
     user = request.user.id
-    return JsonResponse(user,safe=False) 
+    return JsonResponse({"user":user}) 
     
 
 
 def liked_posts(request,post_id):
+    if request.user.is_authenticated:
 
-    user = User.objects.get(pk=request.user.id)
+        user = User.objects.get(pk=request.user.id)
+    
+    
    
-    liked_posts = user.likes.filter(likes_post=post_id)
-    return JsonResponse([liker.serialize() for liker in liked_posts], safe=False)
+    try:
+        
+         if Like.objects.get(liker=user,likes_post=post_id):
+             liked = True
+         else:
+             liked = False
+    except:
+        liked = False
+    
+    return JsonResponse({"liked":liked})
+
+
 
 # still need to be tested...
 @csrf_exempt
-def like(request,post_id):
+def LikeAndUnlike(request):
     if request.method != 'POST':
        return JsonResponse({"Error": "Post is required"}, status=300)
-    
-    post = Post.objects.get(pk=post_id)
-    num_likes = post.likes
-    Post.objects.filter(pk=post_id).update(likes=num_likes + 1)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"Error":"You must log in to like the post"}, status=400) 
+
+    data = json.loads(request.body)
+    post_id = data.get("post_id")
+
     user = User.objects.get(pk=request.user.id)
-    if Like.objects.get(liker=user,likes_post=post):
-        return JsonResponse({"Error": "already liked the post"}, status=301)
-    Like.objects.create(liker=user,likes_post=post)
-    return JsonResponse({"sucess": "liked the post"}, status=200)
+    likes_to_update = Post.objects.get(pk=post_id).likes
+    try:
+        if Like.objects.get(liker=user, likes_post=Post.objects.get(pk=post_id)):
+            already_liked = True
+            Post.objects.filter(pk=post_id).update(likes=likes_to_update - 1)
+            Like.objects.get(liker=user, likes_post=Post.objects.get(pk=post_id)).delete()
+    except:
+
+        already_liked = False
+        Post.objects.filter(pk=post_id).update(likes=likes_to_update + 1)
+        Like.objects.create(liker=user, likes_post=Post.objects.get(pk=post_id))
+
+    num_likes = Post.objects.get(pk=post_id).likes
+    return JsonResponse({"sucess": "liked the post",
+                          "num_likes": num_likes,
+                          "already_liked":already_liked
+                       })
+
 
 @csrf_exempt
 def unlike(request,post_id):
