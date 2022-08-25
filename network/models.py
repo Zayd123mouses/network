@@ -2,7 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.views.generic import ListView
 
-
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
+from django.core.exceptions import ValidationError
 
 class User(AbstractUser):
     
@@ -17,13 +19,20 @@ class UserFollowing(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     class Meta:
         unique_together = ('user_id', 'following_user_id',)
+    def __str__(self):
+        return str(self.following_user_id.id)
 
+   
     def serialize(self):
         return {
             "followers": str(self.user_id),
             "following": str(self.following_user_id)
         }
-    
+@receiver(pre_save, sender=UserFollowing)
+def check_self_following(sender, instance, **kwargs):
+    if instance.user_id == instance.following_user_id:
+        raise ValidationError('You can not follow yourself')
+   
 
 class Like(models.Model):
     liker = models.ForeignKey("User", on_delete=models.CASCADE, related_name="likes")
