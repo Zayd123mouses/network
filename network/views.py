@@ -117,7 +117,6 @@ def profile(request,username):
      pre_ready_followers = user_profile.followers.all()
      user_profile_followers = [post.serialize() for post in pre_ready_followers]
      
-
      return JsonResponse({"posts_count":posts,  
                          "following": user_profile_followings,
                          "followers":  user_profile_followers ,
@@ -126,17 +125,7 @@ def profile(request,username):
              
                               })
 
-    #  return render(request, 'network/profile.html',{
-    #     'username': str(userName),
-    #     'user_name': str(request.user),
-    #     'post_count': Post.objects.filter(author__username =userName).count(),
-    #     'followers_count': user_profile.followers.count(),
-    #     'following_count': user_profile.following.count(),
-    #     'followings' : following_data,
-    #     'followers' : followers_data2
-    #  })
      
-
 def profile_posts(request):
     data = request.headers.get("path")
     index = data.rfind('/')
@@ -145,57 +134,6 @@ def profile_posts(request):
     posts = Post.objects.filter(author__username=str(profile_name)).order_by("-timestamp")
     
     return JsonResponse({"posts":[post.serialize() for post  in posts]}, safe=False)
-
-
-
-# def user_posts(request,user):
-#     if not User.objects.get(username=user):
-#         return JsonResponse({"message": "Invalid user"}, status=404)
-
-#     posts = Post.objects.filter(author__username=user)
-#     posts = posts.order_by("-timestamp").all() 
-#     return JsonResponse([post.serialize() for post in posts], safe=False)
-
-<<<<<<< HEAD
-     
-@csrf_exempt
-def following(request):
-    if request.method != 'POST':
-        return JsonResponse({"Error": "POST is required"}, status=301)
-=======
- 
-# @csrf_exempt
-# def following(request):
-#     if request.method != 'POST':
-#         return JsonResponse({"Error": "POST is required"}, status=301)
->>>>>>> master
-    
-#     data = json.loads(request.body)
-#     following_user = User.objects.get(username=data.get('following_new_user'))
-#     print(f"{data.get('following_new_user')}+++++++++++++++++")
-
-#     try:
-#         the_follower = User.objects.get(pk=request.user.id)
-#         following_user = User.objects.get(username=data.get('following_new_user'))
-#         print(f"{following_user} {request.user.id}, {following_user.id}")
-#         UserFollowing.objects.create(user_id=the_follower, following_user_id=following_user)
-#         return JsonResponse({"Success": "follow has been added"}, status=200)
-#     except:
-#         return JsonResponse({"ERROR": "Falied to follow the user"}, status=200)
-
-   
-# @csrf_exempt
-# def unfollow(request):
-#     if request.method != 'POST':
-#         return JsonResponse({"Error": "POST is required"}, status=301)
-
-#     data = json.loads(request.body)
-#     unfollow_user = User.objects.get(username=data.get('unfollow'))
-#     user = User.objects.get(pk=request.user.id)
-#     the_unfollowing = UserFollowing.objects.get(user_id=user, following_user_id=unfollow_user)
-#     the_unfollowing.delete()
-#     return JsonResponse({"Success": "function is working"}, status=200)
-
 
 
 def following_posts_view(request):
@@ -240,7 +178,6 @@ def liked_posts(request,post_id):
 
 
 
-# still need to be tested...
 #Handle all the like and unlike actions
 @csrf_exempt
 def LikeAndUnlike(request):
@@ -290,11 +227,6 @@ def Edit(request):
     
     return JsonResponse({"state": state})
 
-
-
-
-
-
 def followState(request,username):
     try:
         if UserFollowing.objects.get(user_id=User.objects.get(pk=request.user.id), following_user_id=User.objects.get(username=username)):
@@ -324,109 +256,3 @@ def followAndUnfollow(request):
     return JsonResponse({"already_followed": already_followed,
                          "following_count": User.objects.get(username=username).followers.count()
                         })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# @csrf_exempt
-# def unlike(request,post_id):
-#     if request.method != 'POST':
-#        return JsonResponse({"Error": "Post is required"}, status=300)
-    
-#     user = User.objects.get(pk=request.user.id)
-#     post = Post.objects.get(pk=post_id)
-#     num_likes = post.likes
-#     if num_likes == 0:
-#         return JsonResponse({"norice": "likes already zero"}, status=300)
-
-#     Post.objects.filter(pk=post_id).update(likes=num_likes - 1)
-#     to_remove = Like.objects.get(liker=user,likes_post=post)
-#     to_remove.delete()
-#     return JsonResponse({"sucess": "unlicked the post"}, status=300)
-    
-    
-
-
-
-
-
-
-
-
-
-
-# # return all the posts available
-# def all_posts(request):
-#     posts = Post.objects.all()
-#     posts = posts.order_by("-timestamp").all()
-#     return JsonResponse([post.serialize() for post in posts], safe=False)
-
-
-
-# @csrf_exempt
-# def new_post(request):
-#     if request.method != 'POST':
-#         return JsonResponse({"error": "POST request required."}, status=400)
-
-#     data = json.loads(request.body)
-#     user = User.objects.get(pk=request.user.id)
-#     new_post = Post.objects.create(author=user, post=data.get("post_content"))
-#     return JsonResponse({"message": "Email sent successfully."}, status=201)
-
-    
-
-
-
-
-# def profile(request,user_name):
-    
-#     print(f"++++++++++++++{user_name}")
-#     user = User.objects.filter(username=user_name)
-#     if not user:
-#         print("hello2")
-#         return JsonResponse({"message": "Wrong user."}, status=404)
-
-#     posts = Post.objects.filter(author__username= user_name)
-#     posts = posts.order_by("-timestamp").all()
-#     return JsonResponse([post.serialize() for post in posts], safe=False)
-
-
-# # enter directly via url on browser
-# def person(request,user_name):
-#         return render(request, "network/index.html")
-    
-
-
-
-
-
-# @csrf_exempt
-# def posts(request, action):
-#     if request.method == 'POST':
-#         # get the data from json and create new post 
-#         data = json.loads(request.body)
-#         user = User.objects.get(pk=request.user.id)
-#         new_post = Post.objects.create(author=user, post=data.get("post_content"))
-        
-#         return JsonResponse({"message": "Email sent successful1`ely."}, status=201)
- 
-#     posts = Post.objects.all()
-#     posts = posts.order_by("-timestamp").all()
-#     return JsonResponse({"message": "Email sent successfully."}, status=201)
-
-      
-
-# # def profile(request, id):
-# #     posts = Post.objects.filter(author=request.user.id)
-# #     posts = posts.order_by("-timestamp").all()
-# #     return JsonResponse([post.serialize() for post in posts], safe=False)

@@ -27,7 +27,8 @@ class UserFollowing(models.Model):
         return {
             "followers": str(self.user_id),
             "following": str(self.following_user_id)
-        }
+               }
+
 @receiver(pre_save, sender=UserFollowing)
 def check_self_following(sender, instance, **kwargs):
     if instance.user_id == instance.following_user_id:
@@ -70,7 +71,7 @@ class Post(models.Model):
             "post": self.post,
             "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
             "likes": self.likes
-        }
+              }
 
         
 class ContactListView(ListView):

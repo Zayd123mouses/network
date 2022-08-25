@@ -172,7 +172,7 @@ function Posts(view){
 
 // get the current user id
     let user_id;
-fetch(`user_id`)
+fetch(`/user_id`)
 .then(response => response.json())
 .then(result => {
     user_id = result.user
