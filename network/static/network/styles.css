@@ -152,18 +152,35 @@ p {
 
 
 
-.capitalize{
+/* https://css-tricks.com/4-ways-to-animate-the-color-of-a-text-link-on-hover/ */
+.capitalize {
     text-transform: capitalize;
-}
+    font-size: 2em;
+  font-weight: 800;
+  color: royalblue;
+  overflow: hidden;
+  background: linear-gradient(to right, midnightblue, midnightblue 50%, royalblue 50%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 100%;
+  background-position: 100%;
+  transition: background-position 275ms ease;
+  text-decoration: none; // text decorations are clipped in WebKit browsers
 
+}
+.capitalize:hover{
+  
+    cursor: pointer;
+
+    background-position: 0 100%;
+  }
 .post{
     padding: 10px;
 
 }
-#all-posts-view{
-   
-    position: relative;
- }
+
+
  #next{
     
     position: absolute;
@@ -172,3 +189,7 @@ p {
     margin-left: 50%;
     text-align: center;
  }
+
+.relative{
+    position: relative;
+}
