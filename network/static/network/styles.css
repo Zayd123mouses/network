@@ -10,9 +10,6 @@ body{
     width:100% !important;
 }
 
-.textarea_danger{
-    border:2px solid red !important;
-}
 
 .textarea:focus{
     box-shadow:none;
@@ -21,7 +18,7 @@ body{
 }
 
 #post{
-    border: solid black 5px;
+    border: solid black 4px;
     padding: 10px;
     margin-top: 5px;
 }
@@ -166,7 +163,7 @@ p {
   background-size: 200% 100%;
   background-position: 100%;
   transition: background-position 275ms ease;
-  text-decoration: none; // text decorations are clipped in WebKit browsers
+  text-decoration: none;
 
 }
 .capitalize:hover{
@@ -214,3 +211,4 @@ i {
     border-left: 1px solid #d8d8d8;
     pointer-events: none
 }
+
