@@ -13,7 +13,7 @@ urlpatterns = [
     path("new_post", views.new_post, name="new_post"),
     path("profile/<str:userName>", views.profile, name="profile"),
 
-    
+       
 
 
     path("posts/<str:user>", views.user_posts, name="user_posts"),

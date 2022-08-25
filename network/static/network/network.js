@@ -67,7 +67,7 @@ function Show(view){
     }
     document.getElementById(view).style.display = 'block'
 }
-
+ 
 
 function Posts(){
         Show("all-posts-view")

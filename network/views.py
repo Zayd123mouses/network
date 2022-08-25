@@ -154,7 +154,7 @@ def user_posts(request,user):
     posts = posts.order_by("-timestamp").all() 
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
- 
+     
 @csrf_exempt
 def following(request):
     if request.method != 'POST':
