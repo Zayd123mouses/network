@@ -3,6 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
      is_looged = document.getElementById("is_logged").value
     // all data at one. on the home page
     Posts("all_posts_view")
+
+
+
+    const input = document.querySelector("#post_content"),
+    counter = document.querySelector(".counter"),
+    maxLength = input.getAttribute("maxlength");
+
+    input.onkeyup = ()=>{
+      counter.innerText = maxLength - input.value.length;
+    }
     //wait untill making a new post 
     document.querySelector("#new_post_form").onsubmit = function (){
         new_post();}
