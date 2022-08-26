@@ -136,12 +136,8 @@ def profile(request,username):
                 
                                 })
      
-def profile_posts(request):
-    data = request.headers.get("path")
-    index = data.rfind('/')
-    profile_name = data[index+1:]
-    print(profile_name)
-    posts = Post.objects.filter(author__username=str(profile_name)).order_by("-timestamp")
+def profile_posts(request,author):
+    posts = Post.objects.filter(author__username=str(author)).order_by("-timestamp")
     
     return JsonResponse({"posts":[post.serialize() for post  in posts]}, safe=False)
 

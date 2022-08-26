@@ -17,7 +17,7 @@ let first_time_home = true
         followingPosts("following_posts_view")
         first_time = false
     } else if(window.location.href.indexOf("profile") > -1){
-        Show("profile")
+        Load_profile(window.location.pathname.split('/').pop())
 
     }
 
@@ -93,7 +93,13 @@ let first_time_home = true
         Show("following_posts_view")
         document.getElementById("new_post_container").style.display = 'block'
     }else if (event.state.path.indexOf("profile") > -1){
+
         Show("profile")
+        divs = document.querySelector("#profile").children;
+    for (let i = 0; i < divs.length; i++) {
+        divs[i].style.display = "none";
+    }
+        document.getElementById(`profile-` + window.location.pathname.split('/').pop()).style.display = 'block'
     }
    
 }
@@ -265,7 +271,7 @@ function Add_post(post){
    }else if(window.history.state['path'] === 'following_posts_view'){
     document.getElementById("following_posts_view").appendChild(div)
    }else{
-    document.getElementById("profile_posts").appendChild(div)
+    document.getElementById("profile_posts/" + window.location.pathname.split('/').pop()).appendChild(div)
    }
 //    when click on the post author , load the profile
   document.querySelector(`#user-profile-${post.id}`).addEventListener("click",()=>{
@@ -374,13 +380,49 @@ function Load_profile(author){
     })
     .then(response => response.json())
     .then(user => {
-       
-        
+       let div_profile = document.createElement("div")
+       div_profile.setAttribute("class","padding")
+       div_profile.setAttribute("id",`profile-${author}`)
+    
+       div_profile.innerHTML = `
+       <div class="col-md-8">
+           <!-- Column -->
+               <div class="card-body little-profile text-center">
+                   <h3 class="capitalize" class="m-b-0"  id="profile_username">${author}</h3>
+                   <!-- if there were no followers then show the follow button  -->
+                   <p>Web Designer &amp; Developer</p> 
+                   
+                   <div id="follow_button_container_${author}"> </div>
+
+                   
+                   <br>
+                   <hr>
+                   <div class="row text-center m-t-20">
+                       <div class="col-lg-4 col-md-4 m-t-20">
+                           <h3 class="m-b-0 font-light" id="post_count">${user.posts_count}</h3><small><button type="button" class="btn btn-outline-primary" disabled>Posts</button></small>
+                       </div>
+                       <div class="col-lg-4 col-md-4 m-t-20">
+                         <h3 class="m-b-0 font-light" id="follower_count">${user.followers_count}</h3><small><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#Followers">Followers</button></small>
+                     </div>
+                     <div class="col-lg-4 col-md-4 m-t-20">
+                         <h3 class="m-b-0 font-light" id="following_count">${user.following_count}</h3><small><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#Following">Following</button></small>
+   
+                     </div>
+   
+                   </div>
+   
+               </div>
+           </div>
+           <br>
+           <div id="profile_posts/${author}" class="relative"></div>
+       </div>  
+       `
+        document.querySelector("#profile").append(div_profile)
         // fill the html page with the right data
-        document.getElementById("profile_username").innerHTML = author
-        document.getElementById("post_count").innerHTML = user.posts_count
-        document.getElementById("follower_count").innerHTML = user.followers_count
-        document.getElementById("following_count").innerHTML = user.following_count
+        // document.getElementById("profile_username").innerHTML = author
+        // document.getElementById("post_count").innerHTML = user.posts_count
+        // document.getElementById("follower_count").innerHTML = user.followers_count
+        // document.getElementById("following_count").innerHTML = user.following_count
        
         // divs for the list of follower and following of that user
         let div_follower = document.createElement("div")
@@ -401,7 +443,7 @@ function Load_profile(author){
             h1.setAttribute("data-bs-dismiss","modal")
             h1.appendChild(document.createTextNode(Target))
             h1.addEventListener("click",()=>{
-                console.log(`${Target} + What the actual fuck`)
+                document.getElementById(`profile-${author}`).style.display = 'none'
                 Load_profile(Target)
             })
             div_to_append.append(h1)
@@ -421,16 +463,22 @@ function Load_profile(author){
 history.pushState({path: 'profile'}, "", `/profile/${author}`)
 
 //clean the pofile posts after each request 
-document.getElementById("profile_posts").innerHTML = ''
+document.getElementById(`profile_posts/${author}`).innerHTML = ''
 
 // display the profile posts;
- Posts("profile_posts")
+ Posts(`profile_posts/${author}`)
  document.querySelector("#profile").style.display = 'block'
  document.getElementById("new_post_container").style.display = 'none'
-    })
 
-follow_button = document.querySelector("#follow_button")
-follow_button.style.display = 'block'
+let follow_button = document.createElement("a")
+follow_button.setAttribute("class", "m-t-10 waves-effect waves-dark btn btn-primary btn-md btn-rounded")
+follow_button.setAttribute("id",`follow_button_${author}`)
+follow_button.setAttribute("data-abc", "true")
+const is_looged = document.getElementById("is_logged").value
+if(is_looged != 'True'){
+    follow_button.setAttribute("href","/login")
+}
+
 
 fetch(`/followState/${author}`)
 .then(response=>response.json())
@@ -446,6 +494,7 @@ fetch(`/followState/${author}`)
            } else { 
                 follow_button.innerHTML = 'Follow'
                   }  
+                document.querySelector(`#follow_button_container_${author}`).appendChild(follow_button)
         }
 
 
@@ -456,6 +505,7 @@ fetch(`/followState/${author}`)
         
         followAndUnfollow(author)
     })
+})
 })
 
 }
