@@ -5,6 +5,7 @@ const is_looged = document.getElementById("is_logged").value
 
 let first_time = true
 let first_time_home = true
+let first_time_profile = true
 
 
     // Handle routing if the user typed the url into the browser
@@ -53,9 +54,11 @@ let first_time_home = true
 
     if(is_looged == 'True'){
         document.getElementById("profile_layout_button").addEventListener("click",()=>{
-            Load_profile(document.getElementById("profile_layout_button").innerHTML)
+           
+                    Load_profile(document.getElementById("profile_layout_button").innerHTML)
+                    first_time_profile = false
         })
-
+       
 
     document.querySelector("#followingPosts").addEventListener('click', function() {
         if(window.history.state['path'] !== 'following_posts_view'){
@@ -213,6 +216,7 @@ function Posts(view){
     }
 
 // get the current user id
+// the only fetch that the varaible stayd the same outside fetch and I do not know how
     let user_id;
 fetch(`/user_id`)
 .then(response => response.json())
@@ -275,7 +279,10 @@ function Add_post(post){
    }
 //    when click on the post author , load the profile
   document.querySelector(`#user-profile-${post.id}`).addEventListener("click",()=>{
-    Load_profile(post.author)
+    if(post.author_id != user_id){
+        Load_profile(post.author)
+
+    }
   })
 
 }
@@ -373,6 +380,7 @@ function followingPosts(view){
 
 function Load_profile(author){
     Show("profile")
+   
     console.log("Test Test" + author)
     
     fetch(`/profile/${author}`,{
@@ -380,6 +388,18 @@ function Load_profile(author){
     })
     .then(response => response.json())
     .then(user => {
+        
+        try{
+            document.getElementById(`profile-${window.location.pathname.split('/').pop()}`).style.display = 'none'
+            document.getElementById(`profile-${author}`).style.display = 'block'
+            history.pushState({path: 'profile'}, "", `/profile/${author}`)
+
+        }catch{
+            
+        
+        
+
+
        let div_profile = document.createElement("div")
        div_profile.setAttribute("class","padding")
        div_profile.setAttribute("id",`profile-${author}`)
@@ -506,6 +526,7 @@ fetch(`/followState/${author}`)
         followAndUnfollow(author)
     })
 })
+    }
 })
 
 }
@@ -519,7 +540,7 @@ fetch(`/followAndUnfollow`, {
    })
 .then(response => response.json())
 .then(state=> {
-        follow_button = document.querySelector("#follow_button")
+        follow_button = document.querySelector(`#follow_button_${author}`)
         console.log(state)
         if(state.already_followed === true){
         follow_button.innerHTML = "Follow"

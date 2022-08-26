@@ -105,7 +105,6 @@ def all_posts_view(request):
 def new_post(request):
     if request.method != 'POST':
         return JsonResponse({"Error": "method should include post"}, status=300)
-    print("hello")
     data = json.loads(request.body)
     user = User.objects.get(pk=request.user.id)
     new_post = Post.objects.create(author=user, post=data.get("post_content"))
@@ -132,7 +131,8 @@ def profile(request,username):
                             "following": user_profile_followings,
                             "followers":  user_profile_followers ,
                             'followers_count': user_profile.followers.count(),
-                            'following_count': user_profile.following.count()
+                            'following_count': user_profile.following.count(),
+                            "profile_id": user_profile.id
                 
                                 })
      
@@ -157,7 +157,6 @@ def following_posts_view(request):
     
     user_following_posts = []
     for user in user_following:
-        print(f"{user.following_user_id.id}")
         for post in Post.objects.filter(author=User.objects.get(pk=user.following_user_id.id)):     
             user_following_posts.append({"id":post.id, "author_id":user.following_user_id.id, "author": post.author.username,"likes":post.likes,"post": post.post, "timestamp": post.timestamp})
            
@@ -242,7 +241,6 @@ def Edit(request):
 def followState(request,username):
     try:
         if UserFollowing.objects.get(user_id=User.objects.get(pk=request.user.id), following_user_id=User.objects.get(username=username)):
-            print(UserFollowing(user_id=User.objects.get(pk=request.user.id), following_user_id=User.objects.get(username=username)))
             follow = True
     except:
         follow = False
