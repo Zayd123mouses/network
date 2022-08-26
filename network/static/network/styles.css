@@ -212,3 +212,6 @@ i {
     pointer-events: none
 }
 
+.fixed{
+    position: fixed;
+}

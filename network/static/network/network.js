@@ -1,11 +1,28 @@
 document.addEventListener('DOMContentLoaded', function() {
+
 //    check if user is logged in
-     is_looged = document.getElementById("is_logged").value
-    // all data at one. on the home page
-    Posts("all_posts_view")
+const is_looged = document.getElementById("is_logged").value
+
+let first_time = true
+let first_time_home = true
 
 
+    // Handle routing if the user typed the url into the browser
+    if(window.location.pathname === '/home'){
+        history.pushState({path: 'home'}, "", `/home`);
+        Posts("all_posts_view")
+        first_time_home = false
+    }else if(window.location.pathname === '/following_posts_view'){
+        history.pushState({path: 'following_posts_view'}, "", `/following_posts_view`)
+        followingPosts("following_posts_view")
+        first_time = false
+    } else if(window.location.href.indexOf("profile") > -1){
+        Show("profile")
 
+    }
+
+
+    // limit how many charachter the user type into the new post textarea
     const input = document.querySelector("#post_content"),
     counter = document.querySelector(".counter"),
     maxLength = input.getAttribute("maxlength");
@@ -13,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     input.onkeyup = ()=>{
       counter.innerText = maxLength - input.value.length;
     }
+
     //wait untill making a new post 
     document.querySelector("#new_post_form").onsubmit = function (){
         new_post();}
@@ -21,51 +39,68 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector("#all_posts_button").addEventListener('click', function() {
         if(window.location.pathname != '/home'){
             history.pushState({path: 'home'}, "", `/home`);
-
-            document.querySelector('#all-posts-view').style.display = 'block';
-            document.querySelector('#following_view').style.display = 'none';
-            document.querySelector('#new_post_container').style.display = 'block';
+            if(first_time_home === true){
+                Posts("all_posts_view")
+                first_time_home = false
+            }else{
+                Show("all_posts_view")
+                document.getElementById("new_post_container").style.display = 'block'
+            }
+            
             }
  
             })
-    if(is_looged == 'True'){
-    document.querySelector("#followingPosts").addEventListener('click', function() {
-        if(window.location.pathname != '/following_posts_view'){
-            history.pushState({path: 'following_posts_view'}, "", `/following_posts_view`);
-            followingPosts("following_posts_view");}
 
+    if(is_looged == 'True'){
+        document.getElementById("profile_layout_button").addEventListener("click",()=>{
+            Load_profile(document.getElementById("profile_layout_button").innerHTML)
+        })
+
+
+    document.querySelector("#followingPosts").addEventListener('click', function() {
+        if(window.history.state['path'] !== 'following_posts_view'){
+            history.pushState({path: 'following_posts_view'}, "", `/following_posts_view`);
+            if(first_time === true){
+                followingPosts("following_posts_view");
+                first_time = false
+            } else {
+                Show("following_posts_view")
+            }
+          
+            }
+            
         })
     }
-       
-         
-        // // if used the url directly
-         if(window.location.pathname === '/following_posts_view'){
-            
-             followingPosts(window.location.pathname)}
-        // } else if(window.location.pathname === '/home'){
-        //     history.replaceState({path: 'home'}, "", `/home`);
-        // }
 
-   },{ once: true });
+  
+
+   },{once : true});
+
+
+
 
 
 
    window.onpopstate = function(event) {
+    console.log(event.state.path + "++++++++++++++++++++++++++++++++++")
     if(event.state.path === 'home'){
         // do not relode and just show the page
-        history.replaceState({path: 'home'}, "", `/home`);
-        document.querySelector('#all-posts-view').style.display = 'block';
-        document.querySelector('#following_view').style.display = 'none';
-        document.querySelector('#new_post_container').style.display = 'block';
-    } else if(event.state.path === 'followingPosts'){
-        history.replaceState({path: 'followingPosts'}, "", `/followingPosts`)
+       Show("all_posts_view")
+       document.getElementById("new_post_container").style.display = 'block'
         
-        followingPosts()
+
+    } else if(event.state.path === 'following_posts_view'){
+        Show("following_posts_view")
+        document.getElementById("new_post_container").style.display = 'block'
+    }else if (event.state.path.indexOf("profile") > -1){
+        Show("profile")
     }
    
 }
 
+
 function Show(view){
+    
     divs = document.querySelector(".body").children;
     for (let i = 0; i < divs.length; i++) {
         divs[i].style.display = "none";
@@ -75,13 +110,15 @@ function Show(view){
  
 
 function Posts(view){
+    console.log(view)
+       document.getElementById(view).innerHTML = ''
     // show only the all-post view
         Show(view)
         document.getElementById("new_post_container").style.display = 'block'
         //  get all posts at once with a single request to the server
         
         fetch(`/`+view,{
-            headers: new Headers({ 'pageNumber': 1, 'path': window.location.pathname})
+            headers: new Headers({ 'pageNumber': 1, 'path': window.location.pathname, "api":"api"})
         })
         .then(response => response.json())
         .then(results => {
@@ -132,7 +169,6 @@ function Posts(view){
                 });
                 }
     
-
 
             function previous_page(view){
                     page = (page - 1)
@@ -222,10 +258,11 @@ function Add_post(post){
         })
     })
 
-   //  append the post according to what view the user on  
-   if(window.location.pathname === '/home'){
+   //  append the post according to what view the user on 
+  
+   if(window.history.state['path'] === 'home'){
     document.querySelector("#all_posts_view").appendChild(div)
-   }else if(window.location.pathname === '/following_posts_view'){
+   }else if(window.history.state['path'] === 'following_posts_view'){
     document.getElementById("following_posts_view").appendChild(div)
    }else{
     document.getElementById("profile_posts").appendChild(div)
@@ -264,8 +301,7 @@ function LikeAndUnlike(post_id){
         window.location.pathname = 'login'
     }
     console.log(post_id)
-    
-    
+     
     // sending the like or unlike action to the server
     fetch(`/like`, {
                  method: 'POST',
@@ -325,19 +361,21 @@ function Edit(post_id){
 }
 
 function followingPosts(view){
-    Show(view)
     Posts(view)
 }
-
 
 
 function Load_profile(author){
     Show("profile")
     console.log("Test Test" + author)
     
-    fetch(`/profile/${author}`)
+    fetch(`/profile/${author}`,{
+        headers: new Headers({"api":"api"})
+    })
     .then(response => response.json())
     .then(user => {
+       
+        
         // fill the html page with the right data
         document.getElementById("profile_username").innerHTML = author
         document.getElementById("post_count").innerHTML = user.posts_count
@@ -374,7 +412,6 @@ function Load_profile(author){
         })
         modal_following_content.appendChild(div_followig)
         
-
     //    for each follower
         user.followers.forEach(follower =>{
             FollowingAndFollowers(follower.followers,div_follower)
@@ -386,20 +423,14 @@ history.pushState({path: 'profile'}, "", `/profile/${author}`)
 //clean the pofile posts after each request 
 document.getElementById("profile_posts").innerHTML = ''
 
-// the profile posts;
+// display the profile posts;
  Posts("profile_posts")
  document.querySelector("#profile").style.display = 'block'
  document.getElementById("new_post_container").style.display = 'none'
     })
 
-
-
-
-
 follow_button = document.querySelector("#follow_button")
 follow_button.style.display = 'block'
-
-
 
 fetch(`/followState/${author}`)
 .then(response=>response.json())
@@ -416,6 +447,8 @@ fetch(`/followState/${author}`)
                 follow_button.innerHTML = 'Follow'
                   }  
         }
+
+
     follow_button.addEventListener("click",()=>{
         if(user.username === author ){
             return
@@ -425,12 +458,7 @@ fetch(`/followState/${author}`)
     })
 })
 
-
-
-
 }
-
-
 
 function followAndUnfollow(author){
 fetch(`/followAndUnfollow`, {
@@ -487,6 +515,11 @@ fetch(`/followAndUnfollow`, {
 
 
 
+
+
+
+
+// Previous Attempts
 
 
 

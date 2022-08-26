@@ -24,6 +24,7 @@ urlpatterns = [
     path("followState/<str:username>", views.followState, name="followState"),
     path("followAndUnfollow", views.followAndUnfollow, name="followAndUnfollow"),
     path("profile_posts", views.profile_posts, name="profile_posts"),
+     path("logState", views.logState, name="logState"),
    
 
 

@@ -24,6 +24,13 @@ def index(request):
     return HttpResponseRedirect('home')
 
 
+def logState(request):
+    if request.user.is_authenticated:
+        logState = True
+    else:
+        logState = False
+    return JsonResponse({"logState":logState})
+
 def login_view(request):
     if request.method == "POST":
 
@@ -107,24 +114,27 @@ def new_post(request):
     
 
 def profile(request,username):
+
+    if request.headers.get("api") !="api":
+        return home(request)
+
+    else:
     #   get the user posts in reverse order
-     posts = Post.objects.filter(author__username= username).count()
+        posts = Post.objects.filter(author__username= username).count()
+        user_profile = User.objects.get(username=username)
+        pre_ready_followings = user_profile.following.all()
+        user_profile_followings = [post.serialize() for post in pre_ready_followings]
 
-     user_profile = User.objects.get(username=username)
-     pre_ready_followings = user_profile.following.all()
-     user_profile_followings = [post.serialize() for post in pre_ready_followings]
-
-     pre_ready_followers = user_profile.followers.all()
-     user_profile_followers = [post.serialize() for post in pre_ready_followers]
-     
-     return JsonResponse({"posts_count":posts,  
-                         "following": user_profile_followings,
-                         "followers":  user_profile_followers ,
-                         'followers_count': user_profile.followers.count(),
-                         'following_count': user_profile.following.count()
-             
-                              })
-
+        pre_ready_followers = user_profile.followers.all()
+        user_profile_followers = [post.serialize() for post in pre_ready_followers]
+        
+        return JsonResponse({"posts_count":posts,  
+                            "following": user_profile_followings,
+                            "followers":  user_profile_followers ,
+                            'followers_count': user_profile.followers.count(),
+                            'following_count': user_profile.following.count()
+                
+                                })
      
 def profile_posts(request):
     data = request.headers.get("path")
@@ -137,6 +147,13 @@ def profile_posts(request):
 
 
 def following_posts_view(request):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect("home")
+
+    if request.headers.get("api") != "api" :
+        return home(request)
+        
+
       # get all the posts 
     real_user = User.objects.get(pk=request.user.id)
     user_following = real_user.following.all()
@@ -150,8 +167,7 @@ def following_posts_view(request):
            
     return JsonResponse({"posts":sorted(user_following_posts, key=lambda x: x['timestamp'], reverse=True)})
 
-    # how to pick the following posts in the most efficent way? , using double query? or a for loob in the backend to load all of them and send them at once?
-     
+    # how to pick the following posts in the most efficent way? , using double query? or a for loob in the backend to load all of them and send them at once?     
     
 
 # get the user id and send it to javascript
