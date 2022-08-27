@@ -86,7 +86,6 @@ let first_time_home = true
 
 
    window.onpopstate = function(event) {
-    console.log(window.location.pathname + "++++++++++++++++++++++++++++++++++")
     try{
         if(event.state.path === 'home'){
             // do not relode and just show the page
@@ -98,8 +97,6 @@ let first_time_home = true
             Show("following_posts_view")
             document.getElementById("new_post_container").style.display = 'block'
         }else if (event.state.path.indexOf("profile") > -1){
-            console.log(window.history.state["path"])
-
              Load_profile(window.location.pathname.split("/").pop())
         }
     }catch{
@@ -126,7 +123,7 @@ function Show(view){
  
 
 function Posts(view){
-    console.log(view)
+    // console.log(view)
     //    document.getElementById(view).innerHTML = ''
     // show only the all-post view
         Show(view)
@@ -152,14 +149,10 @@ function Posts(view){
                     if(i < numberOfPosts){
                         Add_post(results.posts[i])
                     post_num ++;
-                    }
-                    
-                    
+                    }                    
                 }
 
             }
-            console.log(results)
-
             
             function next_button(view){
                 let button = document.createElement("button")
