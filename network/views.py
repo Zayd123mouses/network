@@ -172,6 +172,8 @@ def user_id(request):
     user = request.user.id
     if request.user.is_authenticated:
         is_logged = True
+    else:
+        is_logged = False
     return JsonResponse({"user":user,
     "is_logged":is_logged}) 
     
@@ -258,6 +260,7 @@ def followState(request,username):
 def followAndUnfollow(request):
     data = json.loads(request.body)
     username = data.get("username")
+    
     
     try:
         exist = UserFollowing.objects.get(user_id=User.objects.get(pk=request.user.id), following_user_id=User.objects.get(username=username))

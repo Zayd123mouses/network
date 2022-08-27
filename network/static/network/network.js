@@ -16,7 +16,11 @@ let first_time_home = true
         history.pushState({path: 'following_posts_view'}, "", `/following_posts_view`)
         followingPosts("following_posts_view")
         first_time = false
-    } 
+    }else {
+        history.pushState({path: 'profile'}, "", `/profile/${window.location.pathname.split("/").pop()}`)
+
+        Load_profile(window.location.pathname.split("/").pop())
+    }
 
 
     // limit how many charachter the user type into the new post textarea
@@ -51,6 +55,8 @@ let first_time_home = true
 
     if(is_looged == 'True'){
         document.getElementById("profile_layout_button").addEventListener("click",()=>{
+            history.pushState({path: 'profile'}, "", `/profile/${document.getElementById("profile_layout_button").innerHTML}`)
+
             Load_profile(document.getElementById("profile_layout_button").innerHTML)
         })
 
@@ -80,19 +86,29 @@ let first_time_home = true
 
 
    window.onpopstate = function(event) {
-    console.log(event.state.path + "++++++++++++++++++++++++++++++++++")
-    if(event.state.path === 'home'){
-        // do not relode and just show the page
-       Show("all_posts_view")
-       document.getElementById("new_post_container").style.display = 'block'
-        
+    console.log(window.location.pathname + "++++++++++++++++++++++++++++++++++")
+    try{
+        if(event.state.path === 'home'){
+            // do not relode and just show the page
+           Show("all_posts_view")
+           document.getElementById("new_post_container").style.display = 'block'
+            
+    
+        } else if(event.state.path === 'following_posts_view'){
+            Show("following_posts_view")
+            document.getElementById("new_post_container").style.display = 'block'
+        }else if (event.state.path.indexOf("profile") > -1){
+            console.log(window.history.state["path"])
 
-    } else if(event.state.path === 'following_posts_view'){
-        Show("following_posts_view")
-        document.getElementById("new_post_container").style.display = 'block'
-    }else if (event.state.path.indexOf("profile") > -1){
-        Show("profile")
+             Load_profile(window.location.pathname.split("/").pop())
+        }
+    }catch{
+        window.location.pathname = '/home'
+        Posts("all_posts_view")
     }
+    
+        
+    
    
 }
 
@@ -148,6 +164,7 @@ function Posts(view){
             function next_button(view){
                 let button = document.createElement("button")
                 button.setAttribute("id","next")
+                button.setAttribute("class", "btn btn-success")
                 button.appendChild(document.createTextNode('Next'))
                 document.getElementById(view).appendChild(button)
                 button.addEventListener("click",()=>{
@@ -162,6 +179,7 @@ function Posts(view){
                 console.log("test")
                 let button = document.createElement("button")
                 button.setAttribute("id","previous")
+                button.setAttribute("class", "btn btn-success")
                 button.appendChild(document.createTextNode('Back'))
                 document.getElementById(view).appendChild(button)
                 button.addEventListener("click",()=>{
@@ -226,7 +244,7 @@ function Add_post(post){
     div.innerHTML = ` <p>${post.timestamp} <p> 
                       <h1 id="${window.history.state['path']}user-profile-${post.id}" class="capitalize">${post.author} </h1>
                       <p id="${window.history.state['path']}post-content-${post.id}">${post.post}</p>
-                      <p id="${window.history.state['path']}likes-count-${post.id}" class="like-count-${post.id}">${post.likes}</p> `
+                      <p id="${window.history.state['path']}likes-count-${post.id}" class="like-count-${post.id}">${post.likes}</p>`
                     
 
 
@@ -234,6 +252,7 @@ function Add_post(post){
     if(post.author_id === user_id){
         let button = document.createElement("button")
         button.setAttribute("id",`edit-${post.id}`)
+        button.setAttribute("class", "btn btn-dark")
         button.setAttribute("data-bs-toggle",`modal`)
         button.setAttribute("data-bs-target",`#exampleModal`)
         button.appendChild(document.createTextNode('Edit'))
@@ -249,6 +268,7 @@ function Add_post(post){
         let like_button = document.createElement("button")
         like_button.setAttribute("id",`${window.history.state['path']}like-${post.id}`)
         like_button.setAttribute("class",`like-${post.id}`)
+        like_button.setAttribute("class", "btn btn-primary")
             
         if(liked.liked === false){
             like_button.appendChild(document.createTextNode("Like"))
@@ -269,10 +289,11 @@ function Add_post(post){
    }else if(window.history.state['path'] === 'following_posts_view'){
     document.getElementById("following_posts_view").appendChild(div)
    }else{
-    document.getElementById("profile_posts").appendChild(div)
+    document.querySelector(`.profile_posts`).appendChild(div)
    }
    document.querySelector(`#${window.history.state['path']}user-profile-${post.id}`).addEventListener("click",()=>{
-     Load_profile(document.querySelector(`#${window.history.state['path']}user-profile-${post.id}`).innerHTML)
+    history.pushState({path: 'profile'}, "", `/profile/${post.author}`)
+     Load_profile(post.author)
 
    })
 }
@@ -346,7 +367,7 @@ function LikeAndUnlike(post_id){
 function Edit(post_id){
     // get the original post and populate it with existing data
     let textarea_for_post = document.querySelector("#updated_post")
-    textarea_for_post.value = document.querySelector(`#post-content-${post_id}`).innerHTML
+    textarea_for_post.value = document.querySelector(`#${window.history.state['path']}post-content-${post_id}`).innerHTML
     // listen for saving the change button
     document.querySelector("#save_updated_post").addEventListener("click",()=> {
         // get the new post content
@@ -364,7 +385,7 @@ function Edit(post_id){
               .then(response => response.json())
                .then(result => {
                 if(result.state === true){
-                      document.querySelector(`#post-content-${post_id}`).innerHTML = new_post.value;
+                    document.querySelector(`#${window.history.state['path']}post-content-${post_id}`).innerHTML = new_post.value;
                 } else{
                     console.log("Error: Something went wrong play try again")
                 }
@@ -428,6 +449,8 @@ function Load_profile(author){
             h1.appendChild(document.createTextNode(Target))
             h1.addEventListener("click",()=>{
                 console.log(`${Target} + What the actual fuck`)
+                history.pushState({path: 'profile'}, "", `/profile/${Target}`)
+
                 Load_profile(Target)
             })
             div_to_append.append(h1)
@@ -444,11 +467,10 @@ function Load_profile(author){
         })
         modal_followers_content.appendChild(div_follower)
 // change the url 
-history.pushState({path: 'profile'}, "", `/profile/${author}`)
 
 //clean the pofile posts after each request 
-document.getElementById("profile_posts").innerHTML = ''
-
+document.querySelector(".profile_posts").innerHTML = ''
+document.querySelector(".profile_posts").setAttribute("id", `profile_posts/${author}`)
 // display the profile posts;
  Posts(`profile_posts/${author}`)
  document.querySelector("#profile").style.display = 'block'
@@ -501,6 +523,8 @@ fetch(`/followAndUnfollow`, {
         follow_button.innerHTML = "Follow"
         } else {
             follow_button.innerHTML = "Unfollow"
+           
+            
         }
         document.getElementById("follower_count").innerHTML = state.following_count
         })
