@@ -108,7 +108,10 @@ def new_post(request):
     data = json.loads(request.body)
     user = User.objects.get(pk=request.user.id)
     new_post = Post.objects.create(author=user, post=data.get("post_content"))
-    return JsonResponse({"Message": "Post has been saved successfuly"}, status=201)
+    post = Post.objects.filter(author=user, post=data.get("post_content"))
+    return JsonResponse({"Message": "Post has been saved successfuly",
+                          "post":[post.serialize() for post  in post]
+                        }, status=201)
 
     
 
@@ -157,9 +160,8 @@ def following_posts_view(request):
     
     user_following_posts = []
     for user in user_following:
-        for post in Post.objects.filter(author=User.objects.get(pk=user.following_user_id.id)):     
-            user_following_posts.append({"id":post.id, "author_id":user.following_user_id.id, "author": post.author.username,"likes":post.likes,"post": post.post, "timestamp": post.timestamp})
-           
+         for post in Post.objects.filter(author=User.objects.get(pk=user.following_user_id.id)).order_by("-timestamp"):
+            user_following_posts.append(post.serialize())
     return JsonResponse({"posts":sorted(user_following_posts, key=lambda x: x['timestamp'], reverse=True)})
 
     # how to pick the following posts in the most efficent way? , using double query? or a for loob in the backend to load all of them and send them at once?     
@@ -168,7 +170,10 @@ def following_posts_view(request):
 # get the user id and send it to javascript
 def user_id(request):
     user = request.user.id
-    return JsonResponse({"user":user}) 
+    if request.user.is_authenticated:
+        is_logged = True
+    return JsonResponse({"user":user,
+    "is_logged":is_logged}) 
     
 
 # to check if the user is on the like list when loading the posts
