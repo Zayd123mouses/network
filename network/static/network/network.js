@@ -42,7 +42,6 @@ let first_time_profile = true
             history.pushState({path: 'home'}, "", `/home`);
             if(first_time_home === true){
                 Posts("all_posts_view")
-                first_time_home = false
             }else{
                 Show("all_posts_view")
                 document.getElementById("new_post_container").style.display = 'block'
@@ -54,9 +53,23 @@ let first_time_profile = true
 
     if(is_looged == 'True'){
         document.getElementById("profile_layout_button").addEventListener("click",()=>{
-           
+                   if(first_time_profile === true){
+
+                   
                     Load_profile(document.getElementById("profile_layout_button").innerHTML)
                     first_time_profile = false
+                   }else{
+
+                   
+                        Show("profile")
+                        divs = document.querySelector("#profile").children;
+                    for (let i = 0; i < divs.length; i++) {
+                        divs[i].style.display = "none";
+                    }
+                        document.getElementById(`profile-` + document.getElementById("profile_layout_button").innerHTML).style.display = 'block'
+                        history.pushState({path: 'profile'}, "", `/profile/${document.getElementById("profile_layout_button").innerHTML}`)
+
+                }       
         })
        
 
@@ -95,15 +108,11 @@ let first_time_profile = true
     } else if(event.state.path === 'following_posts_view'){
         Show("following_posts_view")
         document.getElementById("new_post_container").style.display = 'block'
-    }else if (event.state.path.indexOf("profile") > -1){
 
-        Show("profile")
-        divs = document.querySelector("#profile").children;
-    for (let i = 0; i < divs.length; i++) {
-        divs[i].style.display = "none";
-    }
-        document.getElementById(`profile-` + window.location.pathname.split('/').pop()).style.display = 'block'
-    }
+    }else if (event.state.path.indexOf("profile") > -1){
+         Load_profile(window.location.pathname.split('/').pop())  
+       
+                                                       }
    
 }
 
@@ -226,6 +235,8 @@ fetch(`/user_id`)
             })
 
 
+
+
 // creating the post and appending it
 function Add_post(post){
     let div = document.createElement("div")
@@ -234,7 +245,8 @@ function Add_post(post){
     div.innerHTML = ` <p>${post.timestamp} <p> 
                       <h1 id="user-profile-${post.id}" class="capitalize">${post.author} </h1>
                       <p id="post-content-${post.id}">${post.post}</p>
-                      <p id="likes-count-${post.id}">${post.likes}</p> `
+                      <p id="likes-count-${post.id}">${post.likes}</p> 
+                      `
   
    
     // check if the user in the author and if so , add an edit button
@@ -243,6 +255,8 @@ function Add_post(post){
         button.setAttribute("id",`edit-${post.id}`)
         button.setAttribute("data-bs-toggle",`modal`)
         button.setAttribute("data-bs-target",`#exampleModal`)
+        button.setAttribute("type","button")
+        button.setAttribute("class","btn btn-primary")
         button.appendChild(document.createTextNode('Edit'))
         div.appendChild(button)
         button.addEventListener("click",()=>{
@@ -255,6 +269,7 @@ function Add_post(post){
     .then(liked => {
         let like_button = document.createElement("button")
         like_button.setAttribute("id",`like-${post.id}`)
+        like_button.setAttribute("class","btn btn-primary")
             
         if(liked.liked === false){
             like_button.appendChild(document.createTextNode("Like"))
@@ -279,10 +294,18 @@ function Add_post(post){
    }
 //    when click on the post author , load the profile
   document.querySelector(`#user-profile-${post.id}`).addEventListener("click",()=>{
-    if(post.author_id != user_id){
+    console.log("pleeeeeeeeeeeeeeeeeeeeeeeeeeease")
+    try{
+        if(window.state.path.indexOf("profile") > -1){
+            document.getElementById(`profile-` + window.location.pathname.split('/').pop()).style.display = 'block'
+         }
+         Load_profile(post.author)
+    }catch{
         Load_profile(post.author)
-
     }
+   
+
+    
   })
 
 }
@@ -310,6 +333,8 @@ function new_post(){
     //  handle the like and unlike button in a single function
 function LikeAndUnlike(post_id){
     // if the user is not logged and clicked on the like button , the user should be redirected to the login page
+    const is_looged = document.getElementById("is_logged").value
+
     if(is_looged !='True'){
         window.location.pathname = 'login'
     }
@@ -336,13 +361,18 @@ function LikeAndUnlike(post_id){
     //   update the number of likes on the post
       document.querySelector(`#likes-count-${post_id}`).innerHTML = num_likes
 
-   })
+   }).catch(err => {
+    console.error(err);
+    respondError(res, err);
+  });
           
 }
 
 
 // how to prompt a model to stay on the same page ???
 function Edit(post_id){
+    console.log(post_id + "why the fuck everything keeps breaking")
+    console.log( document.querySelector("#updated_post"))
     // get the original post and populate it with existing data
     let textarea_for_post = document.querySelector("#updated_post")
     textarea_for_post.value = document.querySelector(`#post-content-${post_id}`).innerHTML
@@ -368,7 +398,10 @@ function Edit(post_id){
                     console.log("Error: Something went wrong play try again")
                 }
                 
-               })
+               }).catch(err => {
+                console.error(err);
+                respondError(res, err);
+              });
     })
 
 }
@@ -376,6 +409,11 @@ function Edit(post_id){
 function followingPosts(view){
     Posts(view)
 }
+
+
+
+
+
 
 
 function Load_profile(author){
@@ -388,9 +426,12 @@ function Load_profile(author){
     })
     .then(response => response.json())
     .then(user => {
-        
+        divs = document.querySelector("#profile").children;
+                    for (let i = 0; i < divs.length; i++) {
+                        divs[i].style.display = "none";
+                    }
         try{
-            document.getElementById(`profile-${window.location.pathname.split('/').pop()}`).style.display = 'none'
+            
             document.getElementById(`profile-${author}`).style.display = 'block'
             history.pushState({path: 'profile'}, "", `/profile/${author}`)
 
@@ -527,9 +568,14 @@ fetch(`/followState/${author}`)
     })
 })
     }
-})
+}).catch(err => {
+    console.error(err);
+    respondError(res, err);
+  });
 
 }
+
+
 
 function followAndUnfollow(author){
 fetch(`/followAndUnfollow`, {
@@ -548,634 +594,11 @@ fetch(`/followAndUnfollow`, {
             follow_button.innerHTML = "Unfollow"
         }
         document.getElementById("follower_count").innerHTML = state.following_count
-        })
+        }).catch(err => {
+            console.error(err);
+            respondError(res, err);
+          });
+
+
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Previous Attempts
-
-
-
-
-
-
-// //    load all the posts
-// function all_posts(){
-
-//     document.querySelector('#all-posts-view').style.display = 'block';
-//     document.querySelector('#following_view').style.display = 'none';
-//     document.querySelector('#new_post_container').style.display = 'block';
-
-//     document.querySelector('#all-posts-view').innerHTML = '';
-
-//         fetch(`all_posts`,{
-//              headers: new Headers({ 'secure': 'secure'})
-//             })
-//         .then(response => response.json())
-       
-//         .then(posts => {
-//              console.log(posts)
-
-//             posts.forEach(function(post) {
-//                 let div = document.createElement("div");
-//                  div.setAttribute('id', 'post');
-//                  div.setAttribute('class', 'posts');
-                
-
-//                try{
-//                  fetch(`liked_posts/${post.id}`)
-//                 .then(response => response.json())
-//                 .catch(error => {console.log(error)})
-                
-//                   .then(likers => {
-//                       likers.forEach(liker =>{
-//                           console.log(liker)
-                        
-//                           if(post.author_id == request_user){
-//                               if(liker.like_post == post.id){
-
-//                                   div.innerHTML = ` <a href='/profile/${post.author}'  role='link'  id='profile-page' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button class='liked' onclick='unlike(${post.id},this);'>Liked</button>  <button>Edit</button>`
-//                               }
-                             
-//                           }else{
-//                               if(liker.liker_id == request_user){
-//                                   console.log(liker.liker_id)
-//                                   div.innerHTML = ` <a href='/profile/${post.author}'  role='link'  id='profile-page' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button class='liked' onclick='unlike(${post.id},this);'>Liked</button>`
-  
-//                               }                         
-//                           }
-                         
-//                       })
-                                     
-//                   })
-//                   if(post.author_id == request_user){
-                      
-                      
-//                       div.innerHTML = ` <a  href="{% url 'profile' ${post.author}%}" role='link'  id='' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p id='likes${post.id}'>${post.likes}</p> <button onclick='likes(${post.id},this);'>Likes</button>  <button>Edit</button>`
-//                   }else {
-                    
-                      
-//                   div.innerHTML = ` <a href='/profile/${post.author}'  role='link'  id='profile-page' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button onclick='style.color = "red"' onclick='like(${post.id});'>Likes</button>`
-//                   }
-//                   document.querySelector("#all-posts-view").append(div);
-                    
-//                } catch {
-//                 if(post.author_id == request_user){
-                      
-                      
-//                     div.innerHTML = ` <a href='/profile/${post.author}'  role='link'  id='profile-page' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p id='likes${post.id}'>${post.likes}</p> <button onclick='style.color = "red"' onclick='like(${post.id});'>Likes</button>  <button>Edit</button>`
-//                 }else {
-                  
-                    
-//                 div.innerHTML = ` <a href='/profile/${post.author}'  role='link'  id='profile-page' data-profile=${post.author_id} data-name=${post.author} > <P>${post.timestamp}</p> <h1 class="capitalize">${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button onclick='style.color = "red"' onclick='like(${post.id});'>Likes</button>`
-//                 }
-//                 document.querySelector("#all-posts-view").append(div);
-                  
-
-//                }
-                                                            
-//            })
-//         })  
-// }
-   
- 
-
-
-
-// function followingPosts(){
-//     document.querySelector('#all-posts-view').style.display = 'none';
-//     document.querySelector('#following_view').style.display = 'block';
-//     document.querySelector('#new_post_container').style.display = 'none';
-
-//     document.querySelector('#following_view').innerHTML = ''
-//     fetch(`followingPosts`,{
-//         headers: new Headers({ 'secure': 'secure'}),
-//         dataType: 'json',
-//         // prvent cache when clicking back button
-//         cache: 'no-store'
-//        })
-//    .then(response => response.json())
-  
-//    .then(posts => {
-//     console.log(posts)
-//         posts.forEach(function(post){
-
-//             for(i = 0; i < post.length; i++){
-            
-//               let div = document.createElement("div");
-//                   div.setAttribute('id', 'following_post'); 
-//                   div.setAttribute('class', 'posts');
-//                   console.log(post[i].author)
-//                   div.innerHTML = ` <a href='profile/${post[i].author}'   id='profile-page' data-profile=${post[i].author_id} data-name=${post[i].author} > <P>${post[i].timestamp}</p> <h1 class="capitalize">${post[i].author}</h1></a>  <h3>${post[i].post}</h3>  <p>${post[i].likes}</p> <button>Likes</button>`
-//                   document.querySelector("#following_view").append(div);  }
-
-//         })
-//    })
-    
-//     console.log("test the function")
-// }
-
-
-
-// function load_user_posts(user){
-//     document.querySelector('#all-posts-view').style.display = 'none';
-//     document.querySelector('#following_view').style.display = 'none';
-//     document.querySelector('#new_post_container').style.display = 'none';
-
-
-//     fetch(`/posts/${user}`)
-//    .then(response => response.json())
-//      .then(posts => {
-//         posts.forEach(function(post){
-//             let div = document.createElement("div");
-//             div.setAttribute("id","posts")
-//             div.setAttribute('class', 'posts');
-//             div.innerHTML = ` <a href='/profile/${post.author}'   id='profile-page' data-profile=${post.author_id} data-name=${post.author} ><P>${post.timestamp}</p><h1 class='capitalize'>${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button>Likes</button> `
-//             document.querySelector("#padding").append(div)
-//            console.log(post)
-
-//         })
-       
-//      })
-
-//  }
-
-
-
-// function unlike(post_id,that){
-//     that.innerHTML = 'Like';
-//     alert(that.className)
-
-//      fetch(`unlike/${post_id}`, {
-//          method: 'POST',
-//           body: JSON.stringify({
-//           post_content: document.querySelector("#post_content").value,                 
-//            })
-  
-//            })
-  
-//           .then(response => response.json())
-//            .then(result => {
-//                console.log(result)
-//                  })                   
-// }
-
-
-
-
-// function likes(post_id,that){
-    
-//     fetch(`like/${post_id}`, {
-//         method: 'POST',
-       
-//           })
- 
-//          .then(response => response.json())
-//           .then(result => {
-//               console.log(result)
-//                 })
-//     document.querySelector(`#likes${post_id}`).innerHTML = (parseInt(document.querySelector(`#likes${post_id}`).innerHTML) + 1)
-//     that.innerHTML = 'Liked'
-
-
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// document.addEventListener('DOMContentLoaded', function() {
-
-//     document.querySelector("#new_post_form").addEventListener("submit",() => new_post())
-//     document.querySelector("#all-posts-button").onclick = function(){
-        
-//     }
-//         }
-//     })
-
-
-
-      
-
-// console.log(window.location.pathname)
-// if(window.location.pathname === '/home' || window.location.pathname === '/'){
-//     all_posts();
-// }
-// else{
-//     console.log(window.location.pathname.slice(1))
-//      profile(window.location.pathname.slice(1))
-//     path = window.location.pathname
-
-// }
-
-
-// window.onpopstate = function(event) {
-//     alert(window.location.pathname)
-//     route = event.state.path
-//     if(route === 'home'){
-//         document.querySelector('#all-posts-view').style.display = 'block';
-//           document.querySelector('#profile-view').style.display = 'none';
-//          document.querySelector('#new_post_container').style.display = 'block';
-//     }
-//     else if(route === 'profile'){
-//         document.querySelector('#all-posts-view').style.display = 'none';
-//           document.querySelector('#profile-view').style.display = 'block';
-//          document.querySelector('#new_post_container').style.display = 'none';
-//     }
-// }
-
-
-    
-// })
-
-
-
-// function all_posts(){    
-//       // each time the function is called save it in the history
-//          history.pushState({path: 'home'},'','home');
-//     //     // Show the mailbox and hide other views
-        
-//         document.querySelector('#all-posts-view').style.display = 'block';
-//           document.querySelector('#profile-view').style.display = 'none';
-//          document.querySelector('#new_post_container').style.display = 'block';
-    
-//          document.querySelector('#all-posts-view').innerHTML = '';
-      
-//         // Get the posts from the server
-//          fetch(`all_posts`)
-//          .then(response => response.json())
-//          .then(posts => {
-    
-//             console.log(posts)
-//              posts.forEach(function(post) {
-                
-                
-//                  let div = document.createElement("div");
-//                  div.setAttribute('id', 'post'); 
-               
-//                  div.innerHTML = ` <a   id='profile-page' data-profile=${post.author_id} data-name=${post.author} ><h1>${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button>Likes</button> <button>Comment</button>`
-//                  document.querySelector("#all-posts-view").append(div);
-
-//                  div.onclick = function(){
-//                     profile(div.querySelector("#profile-page").dataset.name)
-                    
-//                  }
-                           
-//             })
-    
-//      })
-//      }
-
-
-// function new_post(){
-   
-//     fetch(`/new_post`, {
-//       method: 'POST',
-//       body: JSON.stringify({
-//       post_content: document.querySelector("#post_content").value,                 
-//        })
-
-//        })
-
-//        .then(response => response.json())
-//         .then(result => {
-//             console.log(result)
-//              })                   
-// }
-
-
-
-// function profile(user_name){
-//     history.pushState({path: 'profile'},'',`${user_name}`);
-//     const user =  user_name
-    
-//          document.querySelector('#all-posts-view').style.display = 'none';
-//           document.querySelector('#profile-view').style.display = 'block';
-//          document.querySelector('#new_post_container').style.display = 'none';
-//          fetch(`profile/${user_name}`)
-//          .then(response => response.json())
-//          .then(posts => {
-//             if(posts.message === 'Wrong user.'){
-//                 let div =  document.createElement("div");
-//                 div.setAttribute("id", "user_profile");
-//             div.setAttribute("class", "user_profile");
-//             div.innerHTML = `<h2 id='user_name'>${user_name.charAt(0).toUpperCase() + user_name.slice(1)}</h2> <h1>This user dose not exist</h1>`
-//             document.querySelector('#profile-view').append(div);
-
-//                 return fasle;
-//             }
-
-//             let div =  document.createElement("div");
-//             div.setAttribute("id", "user_profile");
-//             div.setAttribute("class", "user_profile");
-//             div.innerHTML = `<h2 id='user_name'>${user_name.charAt(0).toUpperCase() + user_name.slice(1)}</h2>`
-//             document.querySelector('#profile-view').append(div);
-         
-//             console.log(user_name)
-//          })
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// //     //  addEventListener for multible buttons for diffrent smaller functions and discard the one large function that contain most of the work
-// //     // divide each function separetly and push and pop state according to it
-    
-// //     document.querySelector("#new_post_form").onsubmit = function(){
-// //         new_post();
-// //     }
-
-
-// //     // if the url already on the home page , disable the button
-// //     document.querySelector('#all-posts-button').onclick = function(){
-
-// //         if (window.location.href.indexOf("home") > -1) {
-// //             return false;
-// //           } 
-// //     }
-    
-          
-// // });
-
-
-// // window.onpopstate = function(event) {
-    
-// //     if(event.state.home === 'home'){
-// //         document.querySelector('#all-posts-view').style.display = 'block';
-// //         document.querySelector('#profile-view').style.display = 'none';
-// //         document.querySelector('#new_post_container').style.display = 'block';
-
-// //     } else{ 
-// //         load_profile(event.state.profile)
-// //     }
-           
-// // }
-
-
-
-
-
-// // function all_posts(){
-// //     // each time the function is called save it in the history
-// //     history.pushState({home: 'home'},'','home');
-// //     // Show the mailbox and hide other views
-    
-// //      document.querySelector('#all-posts-view').style.display = 'block';
-// //      document.querySelector('#profile-view').style.display = 'none';
-// //      document.querySelector('#new_post_container').style.display = 'block';
-
-// //      document.querySelector('#all-posts-view').innerHTML = '';
-  
-// //     // Get the posts from the server
-// //     fetch(`all_posts`)
-// //     .then(response => response.json())
-// //     .then(posts => {
-
-// //         console.log(posts)
-// //         posts.forEach(function(post) {
-            
-            
-// //             let div = document.createElement("div");
-// //             div.setAttribute('id', 'post'); 
-           
-// //             div.innerHTML = ` <a   id='profile-page' data-profile=${post.author_id} data-name=${post.author}><h1>${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button>Likes</button> <button>Comment</button>`
-// //             document.querySelector("#all-posts-view").append(div);
-                       
-// //         })
-
-// // })
-// // }
-
-
-
-
-// // function new_post(){
-// //     alert("hello")
-// //     return false;
-
-// // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // // function load_posts(action) {
-// // //     // each time the function is called save it in the history
-// // //     history.pushState({home: 'home'},'','home');
-// // //     // Show the mailbox and hide other views
-    
-// // //      document.querySelector('#all-posts-view').style.display = 'block';
-// // //      document.querySelector('#profile-view').style.display = 'none';
-// // //      document.querySelector('#new_post_container').style.display = 'block';
-
-// // //      document.querySelector('#all-posts-view').innerHTML = '';
-  
-// // //     // Get the posts from the server
-// // //     fetch(`/posts/${action}`)
-// // //     .then(response => response.json())
-// // //     .then(posts => {
-
-// // //         console.log(posts)
-// // //         posts.forEach(function(post) {
-            
-            
-
-// // //             let div = document.createElement("div");
-// // //             div.setAttribute('id', 'post'); 
-           
-// // //             div.innerHTML = ` <a   id='profile-page' data-profile=${post.author_id} data-name=${post.author}><h1>${post.author}</h1></a>  <h3>${post.post}</h3>  <p>${post.likes}</p> <button>Likes</button> <button>Comment</button>`
-// // //             document.querySelector("#all-posts-view").append(div);
-            
-            
-            
-// // //         })
-        
-// // //         document.querySelectorAll("#profile-page").forEach(profile => {
-
-// // //             profile.onclick = function(){
-// // //                 console.log(profile.dataset);
-
-// // //                 document.querySelector("#all-posts-view").style.display = 'none';
-// // //                 document.querySelector("#new_post_container").style.display = 'none';
-// // //                 document.querySelector("#profile-view").style.display = 'block';
-
-// // //                 history.pushState({profile: profile.dataset.profile}, "", `${profile.dataset.name}`);
-             
-
-// // //             }
-// // //         })
-     
-// // //     })
-    
-// // //     // on submitting new post 
-// // //     // Post the new post
-// // //     document.querySelector("#new_post").onsubmit = () => {
-        
-// // //         fetch(`/posts/${action}`, {
-// // //             method: 'POST',
-// // //             body: JSON.stringify({
-// // //                 post_content: document.querySelector("#post_content").value,
-                
-// // //             })
-// // //           })
-// // //           .then(response => response.json())
-// // //           .then(result => {
-// // //             console.log(result);
-// // //           }) .catch(error => {
-// // //             console.log("Faluir" + error)
-// // //           })
-// // //         return true;
-// // //     }
-    
-    
-// // //    }
-
-
-// // // function load_profile(profile_id){
-// // //      document.querySelector('#all-posts-view').style.display = 'none';
-// // //      document.querySelector('#profile-view').style.display = 'block';
-// // //      document.querySelector('#new_post_container').style.display = 'none';
-// // //      fetch(`/profile/${profile_id}`)
-// // //      .then(response => response.json())
-// // //      .then(profile => {
-// // //         console.log(profile)
-// // //      })
-// // // }
-
-
-  
-   
-
-    
-
-
-
-
